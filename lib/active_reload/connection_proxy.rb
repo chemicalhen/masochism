@@ -98,7 +98,12 @@ module ActiveReload
         
         # hijack the original method
         def connection
-          @@connection_proxy
+          #only return if current is defined
+          #calling retrieve_connection thru current also trigger code that 
+          #raises a ConnectionError if the db is not created, this fixes the 
+          #problem with running rake db:create in rails 2.2.2
+          #TODO: Look into using connected?
+          @@connection_proxy if @@connection_proxy.current
         end
       end
     end

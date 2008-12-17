@@ -65,6 +65,24 @@ module ActiveReload
       assert_equal [], ActiveRecord::Base.connection.slave.tables, 'Master and Slave should be different databases'
     end
 
+    def test_db_not_created_throws_exception_when_connection_is_called
+      ActiveRecord::Base.configurations = mysql_config
+      reload
+      ActiveReload::ConnectionProxy.setup!
+
+      #using the following instead of assert_raises to avoid requiring mysql in the test
+      
+      nothing_thrown = true
+      begin
+        ActiveRecord::Base.connection
+      rescue Exception => ex
+        nothing_thrown = false
+        assert_equal 'Mysql::Error', ex.class.name
+      end
+      
+      assert !nothing_thrown
+    end
+    
   private
 
     def reload
@@ -98,7 +116,14 @@ module ActiveReload
         }
       }
     end
-
+    
+    def mysql_config
+      {
+        Rails.env => {'adapter' => 'mysql', 'database' => 'MASTER',
+          'slave_database' => {'adapter' => 'mysql', 'database' => 'SLAVE'}
+        }
+      }
+    end
 
   end # class ConnectionProxyTest
 end # module ActiveReload
